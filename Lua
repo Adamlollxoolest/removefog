@@ -1,0 +1,32 @@
+-- Place this script in ServerScriptService as a Server Script
+
+local Lighting = game:GetService("Lighting")
+
+-- Clear default lighting fog and darkness
+Lighting.Brightness = 2
+Lighting.GlobalShadows = false
+Lighting.ClockTime = 14 -- Sets time to noon for maximum brightness
+Lighting.FogEnd = 100000
+Lighting.FogStart = 0
+
+-- Remove existing Atmosphere objects (modern Roblox volumetric fog)
+for _, child in ipairs(Lighting:GetChildren()) do
+	if child:IsA("Atmosphere") then
+		child:Destroy()
+	end
+end
+
+-- Prevent any new Atmosphere objects from being added later
+Lighting.ChildAdded:Connect(function(child)
+	if child:IsA("Atmosphere") then
+		child:Destroy()
+	end
+end)
+
+-- Scan Workspace and remove common fog trigger parts or scripts containing "fog" in their name
+for _, desc in ipairs(workspace:GetDescendants()) do
+	local nameLower = desc.Name:lower()
+	if nameLower:find("fog") and (desc:IsA("Script") or desc:IsA("LocalScript") or desc:IsA("BasePart")) then
+		desc:Destroy()
+	end
+end
