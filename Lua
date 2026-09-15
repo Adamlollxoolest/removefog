@@ -1,32 +1,42 @@
--- Place this script in ServerScriptService as a Server Script
+local lighting = game:GetService("Lighting")
 
-local Lighting = game:GetService("Lighting")
+-- Save original settings so you can revert if needed (optional)
+local originalShadows = lighting.GlobalShadows
+local originalFogEnd = lighting.FogEnd
+local originalFogStart = lighting.FogStart
+local originalBrightness = lighting.Brightness
+local originalAmbient = lighting.Ambient
+local originalOutdoorAmbient = lighting.OutdoorAmbient
 
--- Clear default lighting fog and darkness
-Lighting.Brightness = 2
-Lighting.GlobalShadows = false
-Lighting.ClockTime = 14 -- Sets time to noon for maximum brightness
-Lighting.FogEnd = 100000
-Lighting.FogStart = 0
+-- Force maximum brightness and full-bright lighting
+lighting.GlobalShadows = false
+lighting.Brightness = 3
+lighting.Ambient = Color3.fromRGB(255, 255, 255)
+lighting.OutdoorAmbient = Color3.fromRGB(255, 255, 255)
+lighting.FogEnd = 100000
+lighting.FogStart = 0
 
--- Remove existing Atmosphere objects (modern Roblox volumetric fog)
-for _, child in ipairs(Lighting:GetChildren()) do
-	if child:IsA("Atmosphere") then
-		child:Destroy()
+-- Remove Atmosphere if it exists
+local atmosphere = lighting:FindFirstChildOfClass("Atmosphere")
+if atmosphere then
+	atmosphere.Parent = nil
+end
+
+-- Remove dark post-effects (like ColorCorrection, Bloom, DepthOfField)
+for _, child in ipairs(lighting:GetChildren()) do
+	if child:IsA("PostEffect") then
+		child.Parent = nil
 	end
 end
 
--- Prevent any new Atmosphere objects from being added later
-Lighting.ChildAdded:Connect(function(child)
-	if child:IsA("Atmosphere") then
-		child:Destroy()
-	end
-end)
-
--- Scan Workspace and remove common fog trigger parts or scripts containing "fog" in their name
-for _, desc in ipairs(workspace:GetDescendants()) do
-	local nameLower = desc.Name:lower()
-	if nameLower:find("fog") and (desc:IsA("Script") or desc:IsA("LocalScript") or desc:IsA("BasePart")) then
-		desc:Destroy()
+-- Remove or disable fog and darkness triggers across the workspace
+for _, obj in ipairs(workspace:GetDescendants()) do
+	local name = obj.Name:lower()
+	if name:find("fog") or name:find("blind") or name:find("darkness") or name:find("hazard") or name:find("jumpparent") then
+		if obj:IsA("BasePart") then
+			obj.Parent = nil
+		elseif obj:IsA("Script") or obj:IsA("LocalScript") then
+			obj.Disabled = true
+		end
 	end
 end
